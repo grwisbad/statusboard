@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Status Board</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    .status { border-bottom: 1px solid #eee; padding: .5rem 0; }
+    form { margin-bottom: 1.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Status Board</h1>
+  <form id="status-form">
+    <input id="name-input" placeholder="Your name" required />
+    <select id="status-select">
+      <option>online</option>
+      <option>away</option>
+      <option>busy</option>
+    </select>
+    <button type="submit">Update Status</button>
+  </form>
+  <div id="statuses"></div>
+  <script src="main.js"></script>
+</body>
+</html>

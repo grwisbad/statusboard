@@ -1,0 +1,11 @@
+name                = "statusboard"
+main                = "index.js"
+compatibility_date  = "2025-05-04"
+
+account_id = "<YOUR_ACCOUNT_ID>"
+zone_id    = "<YOUR_ZONE_ID>"
+route      = "teams.efarag.xyz/statuses*"
+
+[[d1_databases]]
+binding       = "STATUS_DB"
+database_name = "status"
