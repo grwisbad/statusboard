@@ -1,13 +1,13 @@
-name = "statusboard"
-main = "index.js"
+name               = "statusboard-worker"
+main               = "index.js"
 compatibility_date = "2025-05-04"
-account_id = "350b8c66c41f4a6ef3e90849d75c45bd"
+account_id         = "350b8c66c41f4a6ef3e90849d75c45bd"
 
 [[routes]]
 pattern = "teams.efarag.xyz/statuses*"
 zone_id = "ca47d4b67ff446f4ca02a6c10a32192c"
 
 [[d1_databases]]
-binding = "STATUS_DB"
-database_id = "22903736-95ae-461a-9112-1789c980826d"
+binding       = "STATUS_DB"
+database_id   = "22903736-95ae-461a-9112-1789c980826d"
 database_name = "status"
