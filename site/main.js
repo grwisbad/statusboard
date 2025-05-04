@@ -3,6 +3,11 @@ const form = document.getElementById('status-form');
 const nameInput = document.getElementById('name-input');
 const statusSelect = document.getElementById('status-select');
 const statusesDiv = document.getElementById('statuses');
+const refreshIndicator = document.querySelector('.refresh-indicator');
+
+// Countdown variables
+let countdown = 10;
+let countdownInterval;
 
 async function loadStatuses() {
   try {
@@ -31,7 +36,11 @@ async function loadStatuses() {
         <small>${new Date(s.ts).toLocaleString()}</small>
       </div>`;
     }).join('');
-  } catch {
+    
+    // Call updateBoard with the same data, no need to fetch again
+    updateBoard(updatedList);
+  } catch (error) {
+    console.error("Error loading statuses:", error);
     statusesDiv.innerHTML = '<p>Error loading statuses</p>';
   }
 }
@@ -48,79 +57,96 @@ form.addEventListener('submit', async e => {
       body: JSON.stringify({ name, status }),
     });
     nameInput.value = '';
+    resetCountdown(); // Reset the countdown after updating
     await loadStatuses();
-    updateBoard();
   } catch (err) {
     console.error(err);
   }
 });
 
-// Function to update the board with styled status cards
-function updateBoard() {
-  fetch("/statuses")
-    .then(res => res.json())
-    .then(data => {
-      const board = document.getElementById("board");
-      board.innerHTML = "";
-      
-      const currentTime = new Date().getTime();
-      
-      data.forEach(entry => {
-        const statusTime = new Date(entry.ts).getTime();
-        const timeDiff = currentTime - statusTime;
-        
-        // If status was set more than 5 minutes ago and not already offline, mark as offline
-        let displayStatus = entry.status;
-        let autoOfflineText = '';
-        
-        if (timeDiff > 300000 && entry.status !== 'offline') {
-          displayStatus = 'offline';
-          autoOfflineText = ' (auto)';
-        }
-        
-        const div = document.createElement("div");
-        div.className = "status";
-        div.setAttribute("data-status", displayStatus);
-        
-        const indicator = document.createElement("span");
-        indicator.className = `status-indicator ${displayStatus}`;
-        div.appendChild(indicator);
-        
-        const statusText = document.createTextNode(
-          `${entry.name} is ${displayStatus}${autoOfflineText}`
-        );
-        div.appendChild(statusText);
-        
-        board.appendChild(div);
-      });
-    })
-    .catch(error => {
-      console.error("Error updating board:", error);
-      const board = document.getElementById("board");
-      board.innerHTML = "<p>Error loading status summary</p>";
-    });
+function updateBoard(data) {
+  if (!data) return;
+  
+  const board = document.getElementById("board");
+  if (!board) return;
+  
+  board.innerHTML = "";
+  
+  const currentTime = new Date().getTime();
+  
+  data.forEach(entry => {
+    const statusTime = new Date(entry.ts).getTime();
+    const timeDiff = currentTime - statusTime;
+    
+    // If status was set more than 5 minutes ago and not already offline, mark as offline
+    let displayStatus = entry.status;
+    let autoOfflineText = '';
+    
+    if (timeDiff > 300000 && entry.status !== 'offline') {
+      displayStatus = 'offline';
+      autoOfflineText = ' (auto)';
+    }
+    
+    const div = document.createElement("div");
+    div.className = "status";
+    div.setAttribute("data-status", displayStatus);
+    
+    const indicator = document.createElement("span");
+    indicator.className = `status-indicator ${displayStatus}`;
+    div.appendChild(indicator);
+    
+    const statusText = document.createTextNode(
+      `${entry.name} is ${displayStatus}${autoOfflineText}`
+    );
+    div.appendChild(statusText);
+    
+    board.appendChild(div);
+  });
 }
 
-// Initial load
-loadStatuses();
-updateBoard();
+// Func to update countdown display
+function updateCountdown() {
+  if (refreshIndicator) {
+    refreshIndicator.textContent = `Auto-refreshing in ${countdown}s`;
+  }
+  countdown--;
+  
+  if (countdown < 0) {
+    resetCountdown();
+    loadStatuses();
+  }
+}
 
-// Add refresh indicator animation
-const refreshIndicator = document.querySelector('.refresh-indicator');
+// Reset the countdown timer
+function resetCountdown() {
+  countdown = 10;
+  clearInterval(countdownInterval);
+  countdownInterval = setInterval(updateCountdown, 1000);
+  
+  if (refreshIndicator) {
+    refreshIndicator.textContent = `Auto-refreshing in ${countdown}s`;
+  }
+}
+
+// Show animation during refresh
 function showRefreshAnimation() {
+  if (!refreshIndicator) return;
+  
   refreshIndicator.textContent = "Refreshing...";
   refreshIndicator.style.backgroundColor = "rgba(138, 43, 226, 0.4)";
   
   setTimeout(() => {
-    refreshIndicator.textContent = "Auto-refreshing every 10s";
+    refreshIndicator.textContent = `Auto-refreshing in ${countdown}s`;
     refreshIndicator.style.backgroundColor = "rgba(138, 43, 226, 0.2)";
   }, 1000);
 }
 
-// Set up auto-refresh timer
-setInterval(() => {
-  showRefreshAnimation();
+// Initialize everything
+document.addEventListener('DOMContentLoaded', () => {
+  // Initial load
   loadStatuses();
-  updateBoard();
-}, 10000);
+  
+  // Initial countdown
+  resetCountdown();
+});
 
