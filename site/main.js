@@ -39,3 +39,5 @@ form.addEventListener('submit', async e => {
 
 loadStatuses();
 setInterval(loadStatuses, 10000);
+
+//end
