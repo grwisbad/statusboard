@@ -1,5 +1,5 @@
 const API = '/statuses';
-const APP_VERSION = '1.0.0'; // Match version in HTML
+const APP_VERSION = '1.0.2'; // Match version in HTML
 const form = document.getElementById('status-form');
 const nameInput = document.getElementById('name-input');
 const statusSelect = document.getElementById('status-select');
@@ -70,11 +70,25 @@ async function loadStatuses() {
       debug('Updating statuses div');
       statusesDiv.innerHTML = updatedList.map(s => {
         const autoOfflineText = s.autoOffline ? ' (auto)' : '';
+        
+        // Format timestamp to EST time zone
+        const timestamp = new Date(s.ts);
+        const estTimeStr = timestamp.toLocaleString('en-US', {
+          timeZone: 'America/New_York',
+          year: 'numeric', 
+          month: 'short', 
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          second: '2-digit',
+          timeZoneName: 'short'
+        });
+        
         return `<div class="status" data-status="${s.status}">
           <span class="status-indicator ${s.status}"></span>
           <strong>${s.name}</strong>: ${s.status}${autoOfflineText}
           <span class="status-tag ${s.status}">${s.status}</span>
-          <small>${new Date(s.ts).toLocaleString()}</small>
+          <small>${estTimeStr}</small>
         </div>`;
       }).join('');
     } else {
