@@ -104,51 +104,91 @@ async function loadStatuses() {
   }
 }
 
-// Function to update the board with styled status cards
+// Function to update the board with styled status cards - showing only the latest status per person
 function updateBoard(data) {
   if (!boardDiv) {
     debug('Error: board div not found');
     return;
   }
-  
-  debug('Updating board with data:', data);
-  
+
+  debug('Updating board with latest status per person from data:', data);
+
   if (!data || !Array.isArray(data) || data.length === 0) {
     boardDiv.innerHTML = '<div class="status">No status data available</div>';
     return;
   }
-  
-  boardDiv.innerHTML = "";
-  
-  const currentTime = new Date().getTime();
-  
+
+  boardDiv.innerHTML = ""; // Clear the board first
+
+  const latestStatuses = new Map(); // Use a Map to store the latest status for each name
+
+  // Assuming 'data' is sorted by timestamp descending (latest first) from the API
+  // Iterate through the data and keep only the first (latest) entry for each name
   data.forEach(entry => {
+    if (!latestStatuses.has(entry.name)) {
+      latestStatuses.set(entry.name, entry);
+    }
+  });
+
+  // Now render the latest statuses from the Map
+  latestStatuses.forEach(entry => {
+    const currentTime = new Date().getTime();
     const statusTime = new Date(entry.ts).getTime();
     const timeDiff = currentTime - statusTime;
-    
+
     let displayStatus = entry.status;
     let autoOfflineText = '';
-    
+
+    // Check for auto-offline status
     if (timeDiff > 300000 && entry.status !== 'offline') {
       displayStatus = 'offline';
       autoOfflineText = ' (auto)';
     }
-    
+
     const div = document.createElement("div");
     div.className = "status";
     div.setAttribute("data-status", displayStatus);
-    
+
     const indicator = document.createElement("span");
     indicator.className = `status-indicator ${displayStatus}`;
     div.appendChild(indicator);
-    
+
+    // Display name and the determined status (could be original or auto-offline)
     const statusText = document.createTextNode(
       `${entry.name} is ${displayStatus}${autoOfflineText}`
     );
     div.appendChild(statusText);
-    
+
+    // Add the status tag based on the determined status
+    const statusTag = document.createElement("span");
+    statusTag.className = `status-tag ${displayStatus}`;
+    statusTag.textContent = displayStatus;
+    div.appendChild(statusTag);
+
+    // Add the timestamp in EST
+    const timestamp = new Date(entry.ts);
+    const estTimeStr = timestamp.toLocaleString('en-US', {
+      timeZone: 'America/New_York',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZoneName: 'short'
+    });
+    const small = document.createElement("small");
+    small.textContent = estTimeStr;
+    div.appendChild(small);
+
+
     boardDiv.appendChild(div);
   });
+
+  // If the map is empty after processing, show a message
+  if (latestStatuses.size === 0) {
+      boardDiv.innerHTML = '<div class="status">No unique statuses found</div>';
+  }
 }
 
 form.addEventListener('submit', async e => {
