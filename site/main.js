@@ -1,5 +1,5 @@
 const API = '/statuses';
-const APP_VERSION = '1.0.3'; // Match version in HTML
+const APP_VERSION = '1.0.4'; // Match version in HTML
 const form = document.getElementById('status-form');
 const nameInput = document.getElementById('name-input');
 const statusSelect = document.getElementById('status-select');
@@ -10,6 +10,7 @@ const refreshIndicator = document.querySelector('.refresh-indicator');
 // Countdown variables
 let countdown = 10;
 let countdownInterval;
+let displayCleared = false; // Add this flag
 
 // Debug flag - set to true to see detailed logs
 const DEBUG = true;
@@ -26,6 +27,12 @@ function initializePlaceholders() {
 }
 
 async function loadStatuses() {
+  // Prevent loading if display was just cleared
+  if (displayCleared) {
+    debug('Display is cleared, skipping loadStatuses.');
+    return; // Stop execution here
+  }
+
   debug('Loading statuses from API');
   try {
     // Add cache busting to prevent cached responses
@@ -210,6 +217,7 @@ form.addEventListener('submit', async e => {
     }
     
     nameInput.value = '';
+    displayCleared = false; // Reset the flag BEFORE refreshing
     resetCountdown();
     await loadStatuses(); // Reload statuses after updating
     
@@ -222,13 +230,19 @@ form.addEventListener('submit', async e => {
 // Countdown functions
 function updateCountdown() {
   if (refreshIndicator) {
-    refreshIndicator.textContent = `Auto-refreshing in ${countdown}s`;
+    // Update text based on whether display is cleared
+    if (displayCleared) {
+      refreshIndicator.textContent = `Display cleared. Refreshing in ${countdown}s...`;
+    } else {
+      refreshIndicator.textContent = `Auto-refreshing in ${countdown}s`;
+    }
   }
   countdown--;
-  
+
   if (countdown < 0) {
+    displayCleared = false; // Reset the flag BEFORE refreshing
     resetCountdown();
-    loadStatuses();
+    loadStatuses(); // Now loadStatuses will run
   }
 }
 
@@ -255,15 +269,17 @@ document.addEventListener('DOMContentLoaded', () => {
     clearButton.addEventListener('click', () => {
       debug('Clear button clicked');
       if (statusesDiv) {
-        statusesDiv.innerHTML = '<div class="status">Display cleared.</div>';
+        statusesDiv.innerHTML = '<div class="status">Display cleared. Will refresh soon.</div>';
       }
       if (boardDiv) {
-        boardDiv.innerHTML = '<div class="status">Display cleared.</div>';
+        boardDiv.innerHTML = '<div class="status">Display cleared. Will refresh soon.</div>';
       }
-      // Optionally, you could stop the refresh timer here if desired
-      // clearInterval(countdownInterval);
-      // if (refreshIndicator) refreshIndicator.textContent = "Auto-refresh paused.";
-      alert('Status display cleared. It will refresh automatically.'); // Inform the user
+      displayCleared = true; // Set the flag
+      // Update indicator text immediately
+      if (refreshIndicator) {
+         refreshIndicator.textContent = `Display cleared. Refreshing in ${countdown}s...`;
+      }
+      // No need for alert anymore, the indicator shows the status
     });
   } else {
     debug('Clear button not found');
