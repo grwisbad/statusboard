@@ -1,5 +1,5 @@
 const API = '/statuses';
-const APP_VERSION = '1.0.4'; // Match version in HTML
+const APP_VERSION = '1.0.5'; // Match version in HTML
 const form = document.getElementById('status-form');
 const nameInput = document.getElementById('name-input');
 const statusSelect = document.getElementById('status-select');
@@ -266,20 +266,49 @@ document.addEventListener('DOMContentLoaded', () => {
   // Add event listener for the clear button
   const clearButton = document.getElementById('clear-button');
   if (clearButton) {
-    clearButton.addEventListener('click', () => {
-      debug('Clear button clicked');
-      if (statusesDiv) {
-        statusesDiv.innerHTML = '<div class="status">Display cleared. Will refresh soon.</div>';
+    clearButton.addEventListener('click', async () => {
+      debug('Clear Statuses button clicked');
+
+      // Confirmation dialog
+      if (!confirm('Are you sure you want to permanently delete ALL statuses? This cannot be undone.')) {
+        debug('Clear operation cancelled by user.');
+        return; // Stop if user cancels
       }
-      if (boardDiv) {
-        boardDiv.innerHTML = '<div class="status">Display cleared. Will refresh soon.</div>';
+
+      debug('Proceeding with delete operation...');
+      try {
+        // Send DELETE request to the backend API
+        const response = await fetch(API, { // Assuming DELETE on /statuses clears all
+          method: 'DELETE',
+          headers: {
+            'Cache-Control': 'no-cache' // Ensure request isn't cached
+          }
+        });
+
+        if (!response.ok) {
+          // Try to get error message from response body
+          let errorMsg = `API returned ${response.status}: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            if (errorData && errorData.error) {
+              errorMsg += ` - ${errorData.error}`;
+            }
+          } catch (e) { /* Ignore if response body isn't JSON */ }
+          throw new Error(errorMsg);
+        }
+
+        debug('Delete request successful');
+        alert('All statuses have been permanently deleted.');
+
+        // Immediately refresh the display to show it's empty
+        displayCleared = false; // Ensure loadStatuses runs
+        resetCountdown(); // Reset timer
+        await loadStatuses(); // Reload (should show empty state now)
+
+      } catch (err) {
+        console.error("Error deleting statuses:", err);
+        alert(`Failed to delete statuses: ${err.message}`);
       }
-      displayCleared = true; // Set the flag
-      // Update indicator text immediately
-      if (refreshIndicator) {
-         refreshIndicator.textContent = `Display cleared. Refreshing in ${countdown}s...`;
-      }
-      // No need for alert anymore, the indicator shows the status
     });
   } else {
     debug('Clear button not found');
