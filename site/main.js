@@ -1,5 +1,5 @@
 const API = '/statuses';
-const APP_VERSION = '1.0.2'; // Match version in HTML
+const APP_VERSION = '1.0.3'; // Match version in HTML
 const form = document.getElementById('status-form');
 const nameInput = document.getElementById('name-input');
 const statusSelect = document.getElementById('status-select');
@@ -248,5 +248,25 @@ document.addEventListener('DOMContentLoaded', () => {
   initializePlaceholders();
   loadStatuses();
   resetCountdown();
+
+  // Add event listener for the clear button
+  const clearButton = document.getElementById('clear-button');
+  if (clearButton) {
+    clearButton.addEventListener('click', () => {
+      debug('Clear button clicked');
+      if (statusesDiv) {
+        statusesDiv.innerHTML = '<div class="status">Display cleared.</div>';
+      }
+      if (boardDiv) {
+        boardDiv.innerHTML = '<div class="status">Display cleared.</div>';
+      }
+      // Optionally, you could stop the refresh timer here if desired
+      // clearInterval(countdownInterval);
+      // if (refreshIndicator) refreshIndicator.textContent = "Auto-refresh paused.";
+      alert('Status display cleared. It will refresh automatically.'); // Inform the user
+    });
+  } else {
+    debug('Clear button not found');
+  }
 });
 
